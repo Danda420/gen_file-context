@@ -1,0 +1,21 @@
+[package]
+name = "gen_file-contexts"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+clap = { version = "4.0", features = ["derive"] }
+regex = "1.0"
+walkdir = "2.3"
+
+[profile.release]
+opt-level = "s"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[[bin]]
+name = "gen_file-contexts"
+path = "src/main.rs"
