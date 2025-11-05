@@ -197,8 +197,8 @@ fn process_chunk(
                     let context_line = process_files(&escaped_path, partition)?;
                     results.push(context_line);
                 } else {
-                    let context_line = process_dirs(&escaped_path, partition, &config.fstype)?;
-                    results.push(context_line);
+                    let context_lines = process_dirs(&escaped_path, partition, &config.fstype)?;
+                    results.extend(context_lines);
                 }
             }
         }
@@ -249,8 +249,7 @@ fn process_dirs(
     escaped_path: &str,
     partition: &str,
     fstype: &crate::config::FilesystemType,
-) -> Result<String> {
-    
+) -> Result<Vec<String>> {
     let processed_path = format!("/{}", escaped_path);
     
     let context = if partition.contains("vendor") || partition.contains("odm") {
@@ -271,5 +270,14 @@ fn process_dirs(
         "u:object_r:system_file:s0"
     };
 
-    Ok(format!("/{}/{}{} {}", partition, escaped_path, fstype.folder_pattern(), context))
+    let mut results = Vec::new();
+    
+    if matches!(fstype, crate::config::FilesystemType::Ext4) {
+        results.push(format!("/{}/{} {}", partition, escaped_path, context));
+        results.push(format!("/{}/{}{} {}", partition, escaped_path, fstype.folder_pattern(), context));
+    } else {
+        results.push(format!("/{}/{}{} {}", partition, escaped_path, fstype.folder_pattern(), context));
+    }
+    
+    Ok(results)
 }
