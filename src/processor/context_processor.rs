@@ -213,33 +213,30 @@ fn process_files(
 ) -> Result<String> {
     let processed_path = format!("/{}", escaped_path);
     
-    let context = if processed_path.contains("/bin/hw/") {
-        "u:object_r:hal_allocator_default_exec:s0"
-    } else if processed_path.contains("/bin/") {
-        if !partition.contains("vendor") && !partition.contains("odm") {
-            "u:object_r:system_file:s0"
-        } else {
-            "u:object_r:vendor_qti_init_shell_exec:s0"
+    let context = match () {
+        _ if processed_path.contains("/bin/hw/") => "u:object_r:hal_allocator_default_exec:s0",
+        _ if processed_path.contains("/bin/") => {
+            if !partition.contains("vendor") && !partition.contains("odm") {
+                "u:object_r:system_file:s0"
+            } else {
+                "u:object_r:vendor_qti_init_shell_exec:s0"
+            }
         }
-    } else if !partition.contains("vendor") && !partition.contains("odm") &&
-              (processed_path.contains("/lib/") || processed_path.contains("/lib64/")) {
-        "u:object_r:system_lib_file:s0"
-    } else if partition.contains("vendor") || partition.contains("odm") {
-        if processed_path.contains("/etc/") {
-            "u:object_r:vendor_configs_file:s0"
-        } else if processed_path.contains("/firmware/") {
-            "u:object_r:vendor_firmware_file:s0"
-        } else if processed_path.contains("/app/") || processed_path.contains("/priv-app/") {
-            "u:object_r:vendor_app_file:s0"
-        } else if processed_path.contains("/framework/") {
-            "u:object_r:vendor_framework_file:s0"
-        } else if processed_path.contains("/overlay/") {
-            "u:object_r:vendor_overlay_file:s0"
-        } else {
-            "u:object_r:vendor_file:s0"
+        _ if !partition.contains("vendor") && !partition.contains("odm") &&
+              (processed_path.contains("/lib/") || processed_path.contains("/lib64/")) => {
+            "u:object_r:system_lib_file:s0"
         }
-    } else {
-        "u:object_r:system_file:s0"
+        _ if partition.contains("vendor") || partition.contains("odm") => {
+            match () {
+                _ if processed_path.contains("/etc/") => "u:object_r:vendor_configs_file:s0",
+                _ if processed_path.contains("/firmware/") => "u:object_r:vendor_firmware_file:s0",
+                _ if processed_path.contains("/app/") || processed_path.contains("/priv-app/") => "u:object_r:vendor_app_file:s0",
+                _ if processed_path.contains("/framework/") => "u:object_r:vendor_framework_file:s0",
+                _ if processed_path.contains("/overlay/") => "u:object_r:vendor_overlay_file:s0",
+                _ => "u:object_r:vendor_file:s0",
+            }
+        }
+        _ => "u:object_r:system_file:s0",
     };
 
     Ok(format!("/{}/{} {}", partition, escaped_path, context))
@@ -253,18 +250,13 @@ fn process_dirs(
     let processed_path = format!("/{}", escaped_path);
     
     let context = if partition.contains("vendor") || partition.contains("odm") {
-        if processed_path.contains("/etc") {
-            "u:object_r:vendor_configs_file:s0"
-        } else if processed_path.contains("/firmware") {
-            "u:object_r:vendor_firmware_file:s0"
-        } else if processed_path.contains("/app") || processed_path.contains("/priv-app") {
-            "u:object_r:vendor_app_file:s0"
-        } else if processed_path.contains("/framework") {
-            "u:object_r:vendor_framework_file:s0"
-        } else if processed_path.contains("/overlay") {
-            "u:object_r:vendor_overlay_file:s0"
-        } else {
-            "u:object_r:vendor_file:s0"
+        match () {
+            _ if processed_path.contains("/etc") => "u:object_r:vendor_configs_file:s0",
+            _ if processed_path.contains("/firmware") => "u:object_r:vendor_firmware_file:s0",
+            _ if processed_path.contains("/app") || processed_path.contains("/priv-app") => "u:object_r:vendor_app_file:s0",
+            _ if processed_path.contains("/framework") => "u:object_r:vendor_framework_file:s0",
+            _ if processed_path.contains("/overlay") => "u:object_r:vendor_overlay_file:s0",
+            _ => "u:object_r:vendor_file:s0",
         }
     } else {
         "u:object_r:system_file:s0"
@@ -274,10 +266,8 @@ fn process_dirs(
     
     if matches!(fstype, crate::config::FilesystemType::Ext4) {
         results.push(format!("/{}/{} {}", partition, escaped_path, context));
-        results.push(format!("/{}/{}{} {}", partition, escaped_path, fstype.folder_pattern(), context));
-    } else {
-        results.push(format!("/{}/{}{} {}", partition, escaped_path, fstype.folder_pattern(), context));
     }
+    results.push(format!("/{}/{}{} {}", partition, escaped_path, fstype.folder_pattern(), context));
     
     Ok(results)
 }
