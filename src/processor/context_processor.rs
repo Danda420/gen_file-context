@@ -194,7 +194,7 @@ fn process_chunk(
                 let is_file = full_path.is_file();
 
                 if is_file {
-                    let context_line = process_files(&escaped_path, partition)?;
+                    let context_line = process_files(&escaped_path, partition, config)?;
                     results.push(context_line);
                 } else {
                     let context_lines = process_dirs(&escaped_path, partition, &config.fstype)?;
@@ -210,6 +210,7 @@ fn process_chunk(
 fn process_files(
     escaped_path: &str,
     partition: &str,
+    config: &Config,
 ) -> Result<String> {
     let processed_path = format!("/{}", escaped_path);
     
@@ -217,9 +218,9 @@ fn process_files(
         _ if processed_path.contains("/bin/hw/") => "u:object_r:hal_allocator_default_exec:s0",
         _ if processed_path.contains("/bin/") => {
             if !partition.contains("vendor") && !partition.contains("odm") {
-                "u:object_r:system_file:s0"
+                config.system_bin_context.as_str()
             } else {
-                "u:object_r:vendor_qti_init_shell_exec:s0"
+                config.vendor_bin_context.as_str()
             }
         }
         _ if !partition.contains("vendor") && !partition.contains("odm") &&

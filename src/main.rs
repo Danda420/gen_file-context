@@ -18,6 +18,8 @@ fn main() -> Result<()> {
         .arg(clap::arg!(-c --contexts <CONTEXTS> "Path to partition_file_contexts file").required(true))
         .arg(clap::arg!(-t --threads <THREADS> "Number of parallel threads to use").default_value("4"))
         .arg(clap::arg!(-q --quiet "Make file_contexts generator quiet"))
+        .arg(clap::arg!(--vbin <CONTEXT> "Custom context for vendor & odm /bin/ files"))
+        .arg(clap::arg!(--sbin <CONTEXT> "Custom context for system /bin/ files"))
         .get_matches();
 
     let config = Config::from_matches(&matches)?;

@@ -10,6 +10,8 @@ pub struct Config {
     pub file_contexts: PathBuf,
     pub cores: usize,
     pub silent: bool,
+    pub vendor_bin_context: String,
+    pub system_bin_context: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -67,6 +69,22 @@ impl Config {
 
         let silent = matches.get_flag("quiet");
 
+        let format_context = |s: &str| -> String {
+            if s.contains(':') {
+                s.to_string()
+            } else {
+                format!("u:object_r:{}:s0", s)
+            }
+        };
+
+        let vendor_bin_context = matches.get_one::<String>("vbin")
+            .map(|s| format_context(s))
+            .unwrap_or_else(|| "u:object_r:vendor_qti_init_shell_exec:s0".to_string());
+
+        let system_bin_context = matches.get_one::<String>("sbin")
+            .map(|s| format_context(s))
+            .unwrap_or_else(|| "u:object_r:system_file:s0".to_string());
+
         if !extracted_dir.exists() {
             return Err(anyhow!("Partition directory does not exist: {:?}", extracted_dir));
         }
@@ -77,6 +95,8 @@ impl Config {
             file_contexts,
             cores,
             silent,
+            vendor_bin_context,
+            system_bin_context,
         })
     }
 }
